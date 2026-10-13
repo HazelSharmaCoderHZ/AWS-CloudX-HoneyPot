@@ -1,8 +1,15 @@
 
 import re
+import os
 import boto3
 from datetime import datetime
 from urllib.parse import unquote_plus
+
+# Table name and region are read from the environment so the same code works
+# in LocalStack (AWS_ENDPOINT_URL set by docker-compose) and real AWS
+# (standard credential chain). No credentials or endpoints are hardcoded.
+DYNAMODB_TABLE = os.environ.get("HAA_DYNAMODB_TABLE", "CowrieLogs")
+AWS_REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION")
 
 # Regex patterns
 TIMESTAMP_PATTERN = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)')
@@ -114,28 +121,31 @@ def parse_log_line(line, current_sessions):
     return entry
 
 def lambda_handler(event, context):
-    s3 = boto3.client('s3')
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('CowrieLogs')
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = unquote_plus(event['Records'][0]['s3']['object']['key'])
-    
+    # boto3 picks up credentials from the standard chain (env vars,
+    # ~/.aws/credentials, or IAM role). In LocalStack the endpoint is
+    # supplied via AWS_ENDPOINT_URL, which boto3 respects automatically.
+    s3 = boto3.client("s3", region_name=AWS_REGION)
+    dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+    table = dynamodb.Table(DYNAMODB_TABLE)
     try:
-        obj = s3.get_object(Bucket=bucket, Key=key)
-        lines = obj['Body'].read().decode('utf-8').splitlines()
-
         current_sessions = {}  # Map IPs to session IDs
         entries = []
 
-        for line in lines:
-            if not line.strip():
-                continue
-            try:
-                parsed = parse_log_line(line, current_sessions)
-                if parsed and parsed['timestamp'] and parsed['session'] != 'unknown':
-                    entries.append(parsed)
-            except Exception as e:
-                print(f"Error processing line: {line}\n{str(e)}")
+        for record in event["Records"]:
+            bucket = record["s3"]["bucket"]["name"]
+            key = unquote_plus(record["s3"]["object"]["key"])
+            obj = s3.get_object(Bucket=bucket, Key=key)
+            lines = obj['Body'].read().decode('utf-8').splitlines()
+
+            for line in lines:
+                if not line.strip():
+                    continue
+                try:
+                    parsed = parse_log_line(line, current_sessions)
+                    if parsed and parsed['timestamp'] and parsed['session'] != 'unknown':
+                        entries.append(parsed)
+                except Exception as e:
+                    print(f"Error processing line: {line}\n{str(e)}")
 
         # Batch write to DynamoDB
         with table.batch_writer() as batch:
@@ -149,7 +159,7 @@ def lambda_handler(event, context):
                     'command': entry['command']
                 })
 
-        print(f"Processed {len(entries)} entries from {key}")
+        print(f"Processed {len(entries)} entries from {len(event['Records'])} S3 objects")
         return {'statusCode': 200}
 
     except Exception as e:

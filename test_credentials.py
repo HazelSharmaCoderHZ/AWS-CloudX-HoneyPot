@@ -1,7 +1,9 @@
-﻿import pathlib, re
+﻿import pathlib, re, sys
 
+# Load parser without boto3
 src = pathlib.Path(r"C:\Users\Dell\Documents\AWS-HaaS\Lambda Functions\CowrieLogParser.py").read_text(encoding="utf-8")
 src = src.replace("import boto3", "boto3 = None")
+src = src.replace("import os", "import os")
 ns = {}
 exec(compile(src, "CowrieLogParser.py", "exec"), ns)
 parse_log_line = ns["parse_log_line"]
