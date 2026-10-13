@@ -18,6 +18,7 @@ def _env(name, default=None):
 AWS_MODE = _env("AWS_MODE", "local")
 if AWS_MODE not in ("local", "real"):
     raise SystemExit(f"Unknown AWS_MODE '{AWS_MODE}'. Expected 'local' or 'real'.")
+AWS_PROFILE = _env("AWS_PROFILE") if AWS_MODE == "real" else None
 
 # ── AWS region ──────────────────────────────────────────────────────────────
 AWS_REGION = _env("AWS_REGION", "us-east-1")

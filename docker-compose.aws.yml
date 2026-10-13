@@ -1,0 +1,14 @@
+services:
+  backend:
+    environment:
+      AWS_MODE: real
+      AWS_PROFILE: haas-real
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: null
+      AWS_ACCESS_KEY_ID: null
+      AWS_SECRET_ACCESS_KEY: null
+      HAA_DYNAMODB_TABLE: CowrieLogs
+    volumes:
+      - "${USERPROFILE}/.aws:/root/.aws:ro"
+    depends_on: !reset []

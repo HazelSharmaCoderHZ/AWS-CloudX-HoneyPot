@@ -5,8 +5,9 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,dynamodb,lambda,logs,iam
-      - DEBUG=0
+      SERVICES: s3,dynamodb,lambda,logs,iam
+      DEBUG: "0"
+      AWS_DEFAULT_REGION: us-east-1
     volumes:
       - "./localstack/init/ready.d:/etc/localstack/init/ready.d"
       - "./Lambda Functions:/opt/lambda-src"
@@ -26,10 +27,10 @@ services:
       localstack:
         condition: service_healthy
     environment:
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - AWS_ENDPOINT_URL=http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localstack:4566
     restart: "no"
 
   backend:
@@ -39,12 +40,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AWS_MODE=local
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - AWS_REGION=us-east-1
-      - AWS_ENDPOINT_URL=http://localstack:4566
+      AWS_MODE: local
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localstack:4566
+      HAA_DYNAMODB_TABLE: CowrieLogs
     depends_on:
       localstack:
         condition: service_healthy
@@ -59,7 +61,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://localhost:8000
     depends_on:
       - backend
     restart: unless-stopped

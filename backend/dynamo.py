@@ -13,14 +13,15 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 
-from .config import AWS_MODE, AWS_REGION, AWS_ENDPOINT_URL, HAA_DYNAMODB_TABLE
+from .config import AWS_MODE, AWS_REGION, AWS_ENDPOINT_URL, AWS_PROFILE, HAA_DYNAMODB_TABLE
 
 
 def _client():
     kwargs = {"region_name": AWS_REGION}
     if AWS_ENDPOINT_URL:
         kwargs["endpoint_url"] = AWS_ENDPOINT_URL
-    return boto3.resource("dynamodb", **kwargs)
+    session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
+    return session.resource("dynamodb", **kwargs)
 
 
 def _table():

@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
 
 from .config import (
-    AWS_MODE, AWS_REGION, AWS_ENDPOINT_URL,
+    AWS_MODE, AWS_REGION, AWS_ENDPOINT_URL, AWS_PROFILE,
     HAA_S3_BUCKET, HAA_DYNAMODB_TABLE,
     HAA_PARSER_LAMBDA, HAA_CLOUDWATCH_LAMBDA,
 )
@@ -20,7 +20,8 @@ def _client(service, **extra):
     if AWS_ENDPOINT_URL:
         kwargs["endpoint_url"] = AWS_ENDPOINT_URL
     kwargs.update(extra)
-    return boto3.client(service, **kwargs)
+    session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
+    return session.client(service, **kwargs)
 
 
 def _ok(message, detail=None):

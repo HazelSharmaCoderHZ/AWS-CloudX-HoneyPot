@@ -121,10 +121,7 @@ export default function DashboardClient() {
       </header>
 
       <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-7">
-        <div className="demo-warning">
-          DEMO MODE — LocalStack data may contain synthetic logs. These metrics
-          are not proof of live attacks.
-        </div>
+        
 
         {loading && <p className="text-slate-400">Loading dashboard data…</p>}
         {error && (
